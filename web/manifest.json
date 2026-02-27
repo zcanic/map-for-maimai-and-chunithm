@@ -1,7 +1,7 @@
 {
-  "name": "Arcade Map — 音游机厅地图",
-  "short_name": "机厅地图",
-  "description": "全国 maimai DX / CHUNITHM 机厅查询，附近机厅一查就到",
+  "name": "舞萌中二地图 — maimai / CHUNITHM 机厅查询",
+  "short_name": "舞萌中二地图",
+  "description": "舞萌中二地图：全国 maimai / CHUNITHM 机厅查询，附近机厅一查就到",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0b0f1a",
