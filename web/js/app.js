@@ -117,6 +117,7 @@ function formatDistance(km) {
 
 /* ── Map init ─────────────────────────────── */
 function initMap() {
+  if (map) return; // prevent double-init (Leaflet throws if container already used)
   // Restore saved map view or use default
   const savedView = (() => { try { return JSON.parse(localStorage.getItem('arcmap_view')); } catch(e) { return null; } })();
   const initCenter = savedView ? [savedView.lat, savedView.lng] : [36.5, 105];
@@ -435,6 +436,7 @@ function fitToFiltered(locations) {
   if (withCoords.length === allLocationsWithCoordsLen) return;
 
   const bounds = L.latLngBounds(withCoords.map(l => [l.lat, l.lng]));
+  if (!bounds.isValid()) return;
   map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
 }
 
