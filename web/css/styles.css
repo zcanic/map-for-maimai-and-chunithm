@@ -381,12 +381,10 @@ h1, h2, h3, h4, .logo, .stat-value {
 }
 
 #shopList {
-  overflow-y: auto;
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 400px;
 }
 
 #shopList::-webkit-scrollbar { width: 4px; }
@@ -1076,7 +1074,7 @@ mark.hl {
   .sidebar.open { transform: translateY(0); }
   .drawer-handle { display: flex; }
   .fab-sidebar { display: flex; }
-  #shopList { max-height: 300px; }
+  #shopList { max-height: none; }
   .leaflet-popup-content-wrapper {
     max-width: calc(100vw - 32px) !important;
   }
