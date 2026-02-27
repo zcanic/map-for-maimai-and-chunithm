@@ -18,6 +18,45 @@ let listRendered = 0;        // 已渲染条数
 const LIST_PAGE = 60;        // 每批渲染数量
 let listObserver = null;     // IntersectionObserver
 
+// 最近浏览
+const RECENT_MAX = 10;
+let recentHistory = JSON.parse(localStorage.getItem('arcmap_recent') || '[]');
+
+function saveRecent() {
+  localStorage.setItem('arcmap_recent', JSON.stringify(recentHistory));
+}
+
+function addToRecent(loc) {
+  // Remove existing entry for same id, then prepend
+  recentHistory = recentHistory.filter(r => r.id !== loc.id);
+  recentHistory.unshift({ id: loc.id, name: loc.name, game: loc.game, lat: loc.lat, lng: loc.lng });
+  if (recentHistory.length > RECENT_MAX) recentHistory = recentHistory.slice(0, RECENT_MAX);
+  saveRecent();
+  renderRecentSection();
+}
+
+function renderRecentSection() {
+  const section = document.getElementById('recentSection');
+  if (!section) return;
+  const list = section.querySelector('.recent-list');
+  if (!list) return;
+  if (recentHistory.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+  list.innerHTML = '';
+  recentHistory.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'recent-item';
+    div.innerHTML = `<span class="shop-game-dot" style="background:${getMarkerColor(r.game)}" title="${r.game}"></span><span class="recent-name">${r.name}</span>`;
+    div.addEventListener('click', () => {
+      const idx = allLocations.findIndex(l => l.id === r.id);
+      if (idx !== -1) { flyToMarker(allLocations[idx], idx); closeSidebar(); }
+    });
+    list.appendChild(div);
+  });
+}
 // 收藏功能
 let favorites = new Set(JSON.parse(localStorage.getItem('arcmap_favs') || '[]'));
 
@@ -166,6 +205,14 @@ function buildPopupHTML(loc) {
   `;
 }
 
+/* ── Highlight search keyword in text ──────── */
+function highlight(text, query) {
+  if (!query) return text;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`(${escaped})`, 'gi');
+  return text.replace(re, '<mark class="hl">$1</mark>');
+}
+
 /* ── Create single marker ─────────────────── */
 function createMarker(loc, idx) {
   const color = getMarkerColor(loc.game);
@@ -212,6 +259,8 @@ function buildShopItem(loc, i) {
   const ratingClass = rating != null ? 'has-rating' : '';
   const fav = favorites.has(loc.id);
 
+  const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+
   let distHtml = '';
   if (userLat != null && loc.lat && loc.lng) {
     const d = haversine(userLat, userLng, loc.lat, loc.lng);
@@ -224,19 +273,20 @@ function buildShopItem(loc, i) {
   div.setAttribute('data-id', loc.id);
   div.innerHTML = `
     <div class="shop-header">
-      <div class="shop-name">${loc.name}</div>
+      <div class="shop-name">${highlight(loc.name, searchQuery)}</div>
       <div class="shop-header-right">
         <button class="fav-btn${fav ? ' active' : ''}" data-id="${loc.id}" title="收藏">♥</button>
         <div class="shop-game-dot" style="background:${getMarkerColor(loc.game)}" title="${loc.game}"></div>
       </div>
     </div>
-    <div class="shop-address">${loc.address}</div>
+    <div class="shop-address">${highlight(loc.address, searchQuery)}</div>
     <div class="shop-rating ${ratingClass}">⭐ ${ratingStr}</div>
     ${distHtml}
   `;
   div.addEventListener('click', (e) => {
     if (e.target.closest('.fav-btn')) return; // 收藏按鈕单独处理
     flyToMarker(loc, i);
+    addToRecent(loc);
     closeSidebar();
   });
   div.querySelector('.fav-btn').addEventListener('click', (e) => {
@@ -549,6 +599,7 @@ function loadData() {
 
     // 处理 URL hash 直接跳转（分享链接支持）
     handleHashNavigation();
+    renderRecentSection();
   } finally {
     showLoading(false);
   }
@@ -625,6 +676,31 @@ function registerEvents() {
       openSidebar();
     }
   });
+
+  // 清除最近浏览
+  document.getElementById('clearRecentBtn').addEventListener('click', () => {
+    recentHistory = [];
+    saveRecent();
+    renderRecentSection();
+  });
+
+  // 移动端抑屉手势：向上滑展开，向下滑收起
+  (function initSwipe() {
+    const sidebar = document.getElementById('sidebar');
+    let touchStartY = 0;
+    let touchStartX = 0;
+    sidebar.addEventListener('touchstart', (e) => {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    sidebar.addEventListener('touchend', (e) => {
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dy) < Math.abs(dx) * 1.5) return; // mostly horizontal, ignore
+      if (dy < -40) openSidebar();   // swipe up
+      if (dy > 60 && sidebar.scrollTop === 0) closeSidebar(); // swipe down from top
+    }, { passive: true });
+  })();
 }
 
 /* ── Boot ─────────────────────────────────── */

@@ -931,3 +931,35 @@ body {
   font-size: 13px;
   line-height: 2;
 }
+
+/* ── 最近浏览 ────────────────────────────── */
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #94a3b8;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.recent-item:hover {
+  background: #1e293b;
+  color: #e2e8f0;
+}
+.recent-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 搜索高亮 ───────────────────────────── */
+mark.hl {
+  background: #fde68a;
+  color: #1e293b;
+  border-radius: 2px;
+  padding: 0 1px;
+  font-weight: 600;
+}
