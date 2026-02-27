@@ -364,6 +364,13 @@ function renderListBatch() {
   }
   listRendered = end;
 
+  let sentinel = document.getElementById('listSentinel');
+  if (sentinel) list.appendChild(sentinel);
+  if (sentinel && listObserver) {
+    listObserver.unobserve(sentinel);
+    listObserver.observe(sentinel);
+  }
+
   // Re-apply active highlight after render
   if (lastActiveId != null) {
     const activeEl = list.querySelector(`.shop-item[data-id="${lastActiveId}"]`);
@@ -371,7 +378,6 @@ function renderListBatch() {
   }
 
   // Update / remove sentinel
-  let sentinel = document.getElementById('listSentinel');
   if (listRendered >= listBatch.length) {
     if (sentinel) sentinel.remove();
     if (listObserver) { listObserver.disconnect(); listObserver = null; }
@@ -382,9 +388,10 @@ function renderListBatch() {
       sentinel.style.height = '1px';
       list.appendChild(sentinel);
       if (!listObserver) {
+        const sidebar = document.getElementById('sidebar');
         listObserver = new IntersectionObserver((entries) => {
           if (entries[0].isIntersecting) renderListBatch();
-        }, { rootMargin: '200px' });
+        }, { root: sidebar || null, rootMargin: '200px' });
       }
       listObserver.observe(sentinel);
     }
