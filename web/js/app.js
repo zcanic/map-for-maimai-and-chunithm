@@ -28,7 +28,7 @@ let markerRenderTimer = null;
 
 // 最近浏览
 const RECENT_MAX = 10;
-let recentHistory = JSON.parse(localStorage.getItem('arcmap_recent') || '[]');
+let recentHistory = (() => { try { return JSON.parse(localStorage.getItem('arcmap_recent') || '[]'); } catch(e) { return []; } })();
 
 function saveRecent() {
   localStorage.setItem('arcmap_recent', JSON.stringify(recentHistory));
@@ -59,14 +59,14 @@ function renderRecentSection() {
     div.className = 'recent-item';
     div.innerHTML = `<span class="shop-game-dot" style="background:${getMarkerColor(r.game)}" title="${r.game}"></span><span class="recent-name">${r.name}</span>`;
     div.addEventListener('click', () => {
-      const idx = allLocations.findIndex(l => l.id === r.id);
-      if (idx !== -1) { flyToMarker(allLocations[idx], idx); closeSidebar(); }
+      const found = allLocations.find(l => l.id === r.id);
+      if (found) { flyToMarker(found); closeSidebar(); }
     });
     list.appendChild(div);
   });
 }
 // 收藏功能
-let favorites = new Set(JSON.parse(localStorage.getItem('arcmap_favs') || '[]'));
+let favorites = new Set((() => { try { return JSON.parse(localStorage.getItem('arcmap_favs') || '[]'); } catch(e) { return []; } })());
 
 function saveFavorites() {
   localStorage.setItem('arcmap_favs', JSON.stringify([...favorites]));
@@ -107,7 +107,11 @@ function formatDistance(km) {
 
 /* ── Map init ─────────────────────────────── */
 function initMap() {
-  map = L.map('map', { zoomControl: false }).setView([36.5, 105], 4);
+  // Restore saved map view or use default
+  const savedView = (() => { try { return JSON.parse(localStorage.getItem('arcmap_view')); } catch(e) { return null; } })();
+  const initCenter = savedView ? [savedView.lat, savedView.lng] : [36.5, 105];
+  const initZoom = savedView ? savedView.zoom : 4;
+  map = L.map('map', { zoomControl: false }).setView(initCenter, initZoom);
 
   L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -126,6 +130,12 @@ function initMap() {
     animate: true
   });
   map.addLayer(markerCluster);
+
+  // Persist map view on move
+  map.on('moveend', () => {
+    const c = map.getCenter();
+    try { localStorage.setItem('arcmap_view', JSON.stringify({ lat: c.lat, lng: c.lng, zoom: map.getZoom() })); } catch(e) {}
+  });
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -222,7 +232,7 @@ function highlight(text, query) {
 }
 
 /* ── Create single marker ─────────────────── */
-function createMarker(loc, idx) {
+function createMarker(loc) {
   const color = getMarkerColor(loc.game);
   const icon = L.divIcon({
     className: '',
@@ -235,7 +245,7 @@ function createMarker(loc, idx) {
   const marker = L.marker([loc.lat, loc.lng], { icon })
     .bindPopup(buildPopupHTML(loc), { maxWidth: 300, className: 'custom-popup' });
 
-  markerMap.set(idx, marker);
+  markerMap.set(loc.id, marker);
   return marker;
 }
 
@@ -247,7 +257,7 @@ function renderMarkers(locations) {
   const batch = [];
   locations.forEach((loc, i) => {
     if (!loc.lat || !loc.lng) return;
-    batch.push(createMarker(loc, i));
+    batch.push(createMarker(loc));
   });
   markerCluster.addLayers(batch);
 }
@@ -293,7 +303,7 @@ function buildShopItem(loc, i) {
   `;
   div.addEventListener('click', (e) => {
     if (e.target.closest('.fav-btn')) return; // 收藏按鈕单独处理
-    flyToMarker(loc, i);
+    flyToMarker(loc);
     addToRecent(loc);
     closeSidebar();
   });
@@ -352,7 +362,7 @@ function updateList(locations) {
   counter.textContent = `共 ${locations.length} 条`;
 
   if (locations.length === 0) {
-    list.innerHTML = '<div class="empty-state">😢 没有找到符合条件的机厅<br><small>试试放宽筛选条件</small></div>';
+    list.innerHTML = `<div class="empty-state">😢 没有找到符合条件的机厅<br><small>试试放宽筛选条件</small><br><button class="empty-reset-btn" onclick="document.getElementById('resetFilters').click()">重置所有筛选</button></div>`;
     return;
   }
 
@@ -360,18 +370,18 @@ function updateList(locations) {
 }
 
 /* ── Fly to marker & open popup ───────────── */
-function flyToMarker(loc, idx) {
+function flyToMarker(loc) {
   if (!loc.lat || !loc.lng) return;
 
   document.querySelectorAll('.shop-item.active').forEach(el => el.classList.remove('active'));
-  const el = document.querySelector(`.shop-item[data-idx="${idx}"]`);
+  const el = document.querySelector(`.shop-item[data-id="${loc.id}"]`);
   if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
   lastActiveId = loc.id;
 
   map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 0.8 });
 
   setTimeout(() => {
-    const marker = markerMap.get(idx);
+    const marker = markerMap.get(loc.id);
     if (marker) {
       markerCluster.zoomToShowLayer(marker, () => marker.openPopup());
     }
@@ -432,10 +442,43 @@ function computeFiltered() {
   return result;
 }
 
+/* ── Active filter badge ──────────────────── */
+function updateFilterBadge() {
+  const game     = document.getElementById('gameFilter').value;
+  const province = document.getElementById('provinceFilter').value;
+  const rating   = document.getElementById('ratingFilter').value;
+  const search   = ($searchInput || document.getElementById('searchInput')).value.trim();
+  const favMode  = document.getElementById('favFilterBtn').classList.contains('active');
+  const sort     = document.getElementById('sortFilter')?.value || 'default';
+  let count = 0;
+  if (game !== 'all') count++;
+  if (province !== 'all') count++;
+  if (rating !== 'all') count++;
+  if (search) count++;
+  if (favMode) count++;
+  if (nearbyMode) count++;
+  if (sort !== 'default') count++;
+  let badge = document.getElementById('filterBadge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.id = 'filterBadge';
+    badge.className = 'filter-badge';
+    const hdr = document.querySelector('.card:nth-of-type(2) .card-header-row h3');
+    if (hdr) hdr.appendChild(badge);
+  }
+  if (count > 0) {
+    badge.textContent = count;
+    badge.style.display = '';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 // Full update: markers + stats + list + fitBounds
 function applyFilters() {
   clearTimeout(markerRenderTimer);
   filteredLocations = computeFiltered();
+  updateFilterBadge();
   requestAnimationFrame(() => {
     renderMarkers(filteredLocations);
     updateStats(filteredLocations);
@@ -447,6 +490,7 @@ function applyFilters() {
 // Fast path for search input: update list immediately, defer marker re-render
 function applyFiltersSearch() {
   filteredLocations = computeFiltered();
+  updateFilterBadge();
   updateStats(filteredLocations);
   updateList(filteredLocations);
   clearTimeout(markerRenderTimer);
@@ -471,6 +515,7 @@ function locateUser() {
     userLat = null;
     userLng = null;
     btn.classList.remove('active');
+    btn.setAttribute('aria-pressed', 'false');
     if (userMarker) {
       map.removeLayer(userMarker);
       userMarker = null;
@@ -491,6 +536,8 @@ function locateUser() {
       nearbyMode = true;
 
       btn.classList.remove('loading');
+      btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       btn.classList.add('active');
 
       // 用户位置标记
@@ -622,13 +669,15 @@ function loadData() {
     renderMarkers(allLocations);
     updateStats(allLocations);
     updateList(allLocations);
-    renderMarkers(allLocations);
-    updateStats(allLocations);
-    updateList(allLocations);
 
     // 处理 URL hash 直接跳转（分享链接支持）
     handleHashNavigation();
     renderRecentSection();
+  } catch (err) {
+    console.error('loadData error:', err);
+    const list = document.getElementById('shopList');
+    if (list) list.innerHTML = '<div class="empty-state">⚠️ 数据加载失败<br><small>请刷新页面重试</small></div>';
+    showToast('数据加载失败，请刷新页面');
   } finally {
     showLoading(false);
   }
@@ -645,7 +694,7 @@ function handleHashNavigation() {
   if (!loc.lat || !loc.lng) return;
   setTimeout(() => {
     map.setView([loc.lat, loc.lng], 16);
-    const marker = markerMap.get(idx);
+    const marker = markerMap.get(shopId);
     if (marker) {
       markerCluster.zoomToShowLayer(marker, () => marker.openPopup());
     }
@@ -677,7 +726,18 @@ function registerEvents() {
     document.getElementById('ratingFilter').value = 'all';
     document.getElementById('searchInput').value = '';
     document.getElementById('sortFilter').value = 'default';
-    document.getElementById('favFilterBtn').classList.remove('active');
+    const favBtn = document.getElementById('favFilterBtn');
+    favBtn.classList.remove('active');
+    favBtn.setAttribute('aria-pressed', 'false');
+    // Exit nearby mode if active
+    if (nearbyMode) {
+      nearbyMode = false; userLat = null; userLng = null;
+      const lb = document.getElementById('locateBtn');
+      lb.classList.remove('active', 'loading');
+      lb.setAttribute('aria-pressed', 'false');
+      if (userMarker) { map.removeLayer(userMarker); userMarker = null; }
+    }
+    lastActiveId = null;
     applyFilters();
     map.setView([36.5, 105], 4);
   });
@@ -686,6 +746,7 @@ function registerEvents() {
   document.getElementById('favFilterBtn').addEventListener('click', () => {
     const btn = document.getElementById('favFilterBtn');
     btn.classList.toggle('active');
+    btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
     applyFilters();
   });
 
@@ -725,12 +786,6 @@ function registerEvents() {
     sidebar.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
-  // 清除最近浏览
-  document.getElementById('clearRecentBtn').addEventListener('click', () => {
-    recentHistory = [];
-    saveRecent();
-    renderRecentSection();
-  });
 
   // 移动端抑屉手势：向上滑展开，向下滑收起
   (function initSwipe() {
