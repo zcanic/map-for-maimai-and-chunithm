@@ -313,6 +313,12 @@ function renderListBatch() {
   }
   listRendered = end;
 
+  // Re-apply active highlight after render
+  if (lastActiveId != null) {
+    const activeEl = list.querySelector(`.shop-item[data-id="${lastActiveId}"]`);
+    if (activeEl) activeEl.classList.add('active');
+  }
+
   // Update / remove sentinel
   let sentinel = document.getElementById('listSentinel');
   if (listRendered >= listBatch.length) {
