@@ -391,11 +391,11 @@ function showLoading(visible) {
 }
 
 /* ── Load data ────────────────────────────── */
-async function loadData() {
+function loadData() {
   showLoading(true);
   try {
-    const res = await fetch('data/locations.json');
-    const data = await res.json();
+    const data = window.LOCATIONS;
+    if (!data || !Array.isArray(data)) throw new Error('locations.js 未加载');
 
     allLocations = data.map(loc => {
       if (!loc.ratings && loc.rating) {
