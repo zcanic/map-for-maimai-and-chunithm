@@ -963,3 +963,20 @@ mark.hl {
   padding: 0 1px;
   font-weight: 600;
 }
+
+/* ── 返回顶部按钮 ─────────────────────────── */
+.scroll-top-btn {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 14px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+}
+.scroll-top-btn:hover {
+  background: #334155;
+  color: #e2e8f0;
+}

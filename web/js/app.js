@@ -10,13 +10,21 @@ let filteredLocations = [];
 let userMarker = null;       // 用户位置标记
 let userLat = null;
 let userLng = null;
-let nearbyMode = false;      // 是否处于"附近"模式
+let nearbyMode = false;      // 是否处于“附近”模式
 
 // 列表渐进加载状态
 let listBatch = [];          // 当前要渲染的全量列表
 let listRendered = 0;        // 已渲染条数
 const LIST_PAGE = 60;        // 每批渲染数量
 let listObserver = null;     // IntersectionObserver
+
+// 性能缓存
+let allLocationsWithCoordsLen = 0; // 预计算，避免 fitToFiltered 重复 O(n)
+let $searchInput = null;           // 缓存 DOM 引用
+let lastActiveId = null;           // 记录最后激活的店铺 id
+
+// 标记渲染防抖（搜索时只刷列表，延迟刷地图）
+let markerRenderTimer = null;
 
 // 最近浏览
 const RECENT_MAX = 10;
@@ -259,12 +267,12 @@ function buildShopItem(loc, i) {
   const ratingClass = rating != null ? 'has-rating' : '';
   const fav = favorites.has(loc.id);
 
-  const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+  const searchQuery = ($searchInput || document.getElementById('searchInput')).value.trim().toLowerCase();
 
   let distHtml = '';
   if (userLat != null && loc.lat && loc.lng) {
     const d = haversine(userLat, userLng, loc.lat, loc.lng);
-    distHtml = `<div class="shop-distance">📸 ${formatDistance(d)}</div>`;
+    distHtml = `<div class="shop-distance">📏 ${formatDistance(d)}</div>`;
   }
 
   const div = document.createElement('div');
@@ -351,7 +359,8 @@ function flyToMarker(loc, idx) {
 
   document.querySelectorAll('.shop-item.active').forEach(el => el.classList.remove('active'));
   const el = document.querySelector(`.shop-item[data-idx="${idx}"]`);
-  if (el) el.classList.add('active');
+  if (el) { el.classList.add('active'); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  lastActiveId = loc.id;
 
   map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 0.8 });
 
@@ -367,23 +376,21 @@ function flyToMarker(loc, idx) {
 function fitToFiltered(locations) {
   const withCoords = locations.filter(l => l.lat && l.lng);
   if (withCoords.length === 0) return;
-  if (withCoords.length === allLocations.filter(l => l.lat && l.lng).length) return;
+  if (withCoords.length === allLocationsWithCoordsLen) return;
 
   const bounds = L.latLngBounds(withCoords.map(l => [l.lat, l.lng]));
   map.fitBounds(bounds, { padding: [40, 40], maxZoom: 12 });
 }
 
-/* ── Filters ──────────────────────────────── */
-function applyFilters() {
+/* ── Filters ─────────────────────────────── */
+function computeFiltered() {
   const game     = document.getElementById('gameFilter').value;
   const province = document.getElementById('provinceFilter').value;
   const rating   = document.getElementById('ratingFilter').value;
-  const search   = document.getElementById('searchInput').value.trim().toLowerCase();
+  const search   = ($searchInput || document.getElementById('searchInput')).value.trim().toLowerCase();
+  const favMode  = document.getElementById('favFilterBtn').classList.contains('active');
 
-  // 收藏模式过滤
-  const favMode = document.getElementById('favFilterBtn').classList.contains('active');
-
-  filteredLocations = allLocations.filter(l => {
+  let result = allLocations.filter(l => {
     if (favMode && !favorites.has(l.id)) return false;
     if (game !== 'all' && l.game !== game) return false;
     if (province !== 'all' && l.province !== province) return false;
@@ -400,7 +407,7 @@ function applyFilters() {
 
   // 附近模式：按距离排序（覆盖其他排序）
   if (nearbyMode && userLat != null) {
-    filteredLocations = filteredLocations
+    result = result
       .map(l => ({
         ...l,
         _dist: (l.lat && l.lng) ? haversine(userLat, userLng, l.lat, l.lng) : Infinity
@@ -409,26 +416,38 @@ function applyFilters() {
   } else {
     const sort = document.getElementById('sortFilter')?.value || 'default';
     if (sort === 'rating_desc') {
-      filteredLocations = [...filteredLocations].sort((a, b) => {
-        const ra = a.ratings?.amap?.rating ?? -1;
-        const rb = b.ratings?.amap?.rating ?? -1;
-        return rb - ra;
-      });
+      result = result.sort((a, b) => (b.ratings?.amap?.rating ?? -1) - (a.ratings?.amap?.rating ?? -1));
     } else if (sort === 'rating_asc') {
-      filteredLocations = [...filteredLocations].sort((a, b) => {
-        const ra = a.ratings?.amap?.rating ?? 999;
-        const rb = b.ratings?.amap?.rating ?? 999;
-        return ra - rb;
-      });
+      result = result.sort((a, b) => (a.ratings?.amap?.rating ?? 999) - (b.ratings?.amap?.rating ?? 999));
     } else if (sort === 'name_asc') {
-      filteredLocations = [...filteredLocations].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+      result = result.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
     }
   }
+  return result;
+}
 
-  renderMarkers(filteredLocations);
+// Full update: markers + stats + list + fitBounds
+function applyFilters() {
+  clearTimeout(markerRenderTimer);
+  filteredLocations = computeFiltered();
+  requestAnimationFrame(() => {
+    renderMarkers(filteredLocations);
+    updateStats(filteredLocations);
+    updateList(filteredLocations);
+    if (!nearbyMode) fitToFiltered(filteredLocations);
+  });
+}
+
+// Fast path for search input: update list immediately, defer marker re-render
+function applyFiltersSearch() {
+  filteredLocations = computeFiltered();
   updateStats(filteredLocations);
   updateList(filteredLocations);
-  if (!nearbyMode) fitToFiltered(filteredLocations);
+  clearTimeout(markerRenderTimer);
+  markerRenderTimer = setTimeout(() => {
+    renderMarkers(filteredLocations);
+    if (!nearbyMode) fitToFiltered(filteredLocations);
+  }, 500);
 }
 
 /* ── 附近机厅 ─────────────────────────────── */
@@ -593,6 +612,10 @@ function loadData() {
     }
 
     filteredLocations = allLocations;
+    allLocationsWithCoordsLen = allLocations.filter(l => l.lat && l.lng).length; // cache once
+    renderMarkers(allLocations);
+    updateStats(allLocations);
+    updateList(allLocations);
     renderMarkers(allLocations);
     updateStats(allLocations);
     updateList(allLocations);
@@ -629,10 +652,12 @@ function registerEvents() {
     document.getElementById(id).addEventListener('change', applyFilters);
   });
 
+  $searchInput = document.getElementById('searchInput');
+
   let searchTimer;
-  document.getElementById('searchInput').addEventListener('input', () => {
+  $searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(applyFilters, 250);
+    searchTimer = setTimeout(applyFiltersSearch, 200);
   });
 
   document.getElementById('clearSearch').addEventListener('click', () => {
@@ -675,6 +700,23 @@ function registerEvents() {
     } else {
       openSidebar();
     }
+  });
+
+  // 清除最近浏览
+  document.getElementById('clearRecentBtn').addEventListener('click', () => {
+    recentHistory = [];
+    saveRecent();
+    renderRecentSection();
+  });
+
+  // 列表滑到顶部按鈕
+  const scrollTopBtn = document.getElementById('scrollTopBtn');
+  const sidebar = document.getElementById('sidebar');
+  sidebar.addEventListener('scroll', () => {
+    scrollTopBtn.style.display = sidebar.scrollTop > 200 ? '' : 'none';
+  }, { passive: true });
+  scrollTopBtn.addEventListener('click', () => {
+    sidebar.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // 清除最近浏览
