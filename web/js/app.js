@@ -301,11 +301,21 @@ function buildShopItem(loc, i) {
     <div class="shop-rating ${ratingClass}">⭐ ${ratingStr}</div>
     ${distHtml}
   `;
+  div.setAttribute('role', 'button');
+  div.setAttribute('tabindex', '0');
   div.addEventListener('click', (e) => {
     if (e.target.closest('.fav-btn')) return; // 收藏按鈕单独处理
     flyToMarker(loc);
     addToRecent(loc);
     closeSidebar();
+  });
+  div.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      flyToMarker(loc);
+      addToRecent(loc);
+      closeSidebar();
+    }
   });
   div.querySelector('.fav-btn').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -578,7 +588,7 @@ function shareShop(id, name) {
   if (navigator.share) {
     navigator.share({ title: name, text: `快来 ${name} 打机！`, url }).catch(() => {});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(() => showToast('链接已复制到剪贴板'));
+    navigator.clipboard.writeText(url).then(() => showToast('链接已复制到剪贴板')).catch(() => showToast('复制失败，请手动复制：' + url));
   } else {
     showToast('复制链接：' + url);
   }
@@ -807,6 +817,15 @@ function registerEvents() {
 }
 
 /* ── Boot ─────────────────────────────────── */
+// --vh fix: correct 100vh on mobile when browser chrome appears/disappears
+(function setVh() {
+  const set = () => document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+  set();
+  window.addEventListener('resize', set);
+})();
+initMap();
+loadData();
+registerEvents();
 initMap();
 loadData();
 registerEvents();
