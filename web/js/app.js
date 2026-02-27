@@ -23,6 +23,16 @@ let allLocationsWithCoordsLen = 0; // 预计算，避免 fitToFiltered 重复 O(
 let $searchInput = null;           // 缓存 DOM 引用
 let lastActiveId = null;           // 记录最后激活的店铺 id
 
+// Province slug map (used in popup + nav links)
+const SLUG_MAP = {
+  '北京':'beijing','上海':'shanghai','广东':'guangdong','浙江':'zhejiang','江苏':'jiangsu',
+  '四川':'sichuan','山东':'shandong','湖北':'hubei','湖南':'hunan','河北':'hebei',
+  '河南':'henan','安徽':'anhui','福建':'fujian','辽宁':'liaoning','陕西':'shaanxi',
+  '重庆':'chongqing','天津':'tianjin','云南':'yunnan','贵州':'guizhou','山西':'shanxi',
+  '江西':'jiangxi','广西':'guangxi','黑龙江':'heilongjiang','吉林':'jilin','内蒙古':'neimenggu',
+  '甘肃':'gansu','海南':'hainan','新疆':'xinjiang','宁夏':'ningxia','青海':'qinghai','西藏':'xizang'
+};
+
 // 标记渲染防抖（搜索时只刷列表，延迟刷地图）
 let markerRenderTimer = null;
 
@@ -178,13 +188,19 @@ function getGameLabel(game) {
   return '<span class="tag tag-maimai">maimai DX</span><span class="tag tag-chunithm">CHUNITHM</span>';
 }
 
-/* ── 高德导航链接 ──────────────────────────── */
-function buildNavUrl(loc) {
-  // 高德地图导航（移动端自动唤起 App）
-  return `https://uri.amap.com/marker?position=${loc.lng},${loc.lat}&name=${encodeURIComponent(loc.name)}&callnative=1`;
+/* ── 高德导航链接 ──────────────────── */
+function buildNavUrls(loc) {
+  const name = encodeURIComponent(loc.name);
+  const lat = loc.lat, lng = loc.lng;
+  return {
+    amap:   `https://uri.amap.com/marker?position=${lng},${lat}&name=${name}&callnative=1`,
+    baidu:  `https://api.map.baidu.com/marker?location=${lat},${lng}&title=${name}&content=${name}&output=html`,
+    google: `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+    apple:  `https://maps.apple.com/?q=${name}&ll=${lat},${lng}`
+  };
 }
 
-/* ── Popup HTML ───────────────────────────── */
+/* ── Popup HTML ───────────────────── */
 function buildPopupHTML(loc) {
   const rating = loc.ratings?.amap?.rating;
   const ratingStr = rating != null ? `⭐ ${Number(rating).toFixed(1)}` : '暂无评分';
@@ -200,7 +216,12 @@ function buildPopupHTML(loc) {
     ? `<div class="popup-row">📏 距您 ${formatDistance(haversine(userLat, userLng, loc.lat, loc.lng))}</div>`
     : '';
 
-  const navUrl = buildNavUrl(loc);
+  const navUrls = buildNavUrls(loc);
+  const safeId = loc.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+  const provSlug = loc.province ? (SLUG_MAP[loc.province] || loc.province) : null;
+  const provRow = provSlug
+    ? `<div class="popup-row"><a class="popup-prov-link" href="provinces/${provSlug}/" target="_blank">🏦 查看${loc.province}所有机厅</a></div>`
+    : '';
 
   return `
     <div class="popup-inner">
@@ -211,10 +232,19 @@ function buildPopupHTML(loc) {
       ${costRow}
       ${telRow}
       ${distRow}
+      ${provRow}
       <div class="popup-actions">
-        <a class="popup-btn popup-btn-nav" href="${navUrl}" target="_blank" rel="noopener">
-          🗺️ 导航
-        </a>
+        <div class="nav-picker" id="navpicker_${safeId}">
+          <button class="popup-btn popup-btn-nav" onclick="toggleNavPicker('navpicker_${safeId}')" aria-haspopup="true" aria-expanded="false">
+            🗺️ 导航 ▾
+          </button>
+          <div class="nav-picker-menu" role="menu">
+            <a class="nav-picker-item" href="${navUrls.amap}" target="_blank" rel="noopener" role="menuitem">🗺️ 高德地图</a>
+            <a class="nav-picker-item" href="${navUrls.baidu}" target="_blank" rel="noopener" role="menuitem">🗺️ 百度地图</a>
+            <a class="nav-picker-item" href="${navUrls.google}" target="_blank" rel="noopener" role="menuitem">🌐 Google Maps</a>
+            <a class="nav-picker-item" href="${navUrls.apple}" target="_blank" rel="noopener" role="menuitem">🌏 Apple Maps</a>
+          </div>
+        </div>
         <button class="popup-btn popup-btn-share" onclick="shareShop('${loc.id}', '${loc.name.replace(/'/g, "\\'")}')">
           🔗 分享
         </button>
@@ -594,6 +624,25 @@ function shareShop(id, name) {
   }
 }
 
+/* ── Nav picker toggle ──────────────────── */
+function toggleNavPicker(id) {
+  const picker = document.getElementById(id);
+  if (!picker) return;
+  const isOpen = picker.classList.toggle('open');
+  picker.querySelector('button').setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  if (isOpen) {
+    // Close when clicking outside
+    const closeHandler = (e) => {
+      if (!picker.contains(e.target)) {
+        picker.classList.remove('open');
+        picker.querySelector('button').setAttribute('aria-expanded', 'false');
+        document.removeEventListener('click', closeHandler, true);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeHandler, true), 0);
+  }
+}
+
 /* ── Toast ────────────────────────────────── */
 let toastTimer;
 function showToast(msg) {
@@ -649,15 +698,7 @@ function loadData() {
       sel.appendChild(opt);
     });
 
-    // Populate province nav links
-    const SLUG_MAP = {
-      '北京':'beijing','上海':'shanghai','广东':'guangdong','浙江':'zhejiang','江苏':'jiangsu',
-      '四川':'sichuan','山东':'shandong','湖北':'hubei','湖南':'hunan','河北':'hebei',
-      '河南':'henan','安徽':'anhui','福建':'fujian','辽宁':'liaoning','陕西':'shaanxi',
-      '重庆':'chongqing','天津':'tianjin','云南':'yunnan','贵州':'guizhou','山西':'shanxi',
-      '江西':'jiangxi','广西':'guangxi','黑龙江':'heilongjiang','吉林':'jilin','内蒙古':'neimenggu',
-      '甘肃':'gansu','海南':'hainan','新疆':'xinjiang','宁夏':'ningxia','青海':'qinghai','西藏':'xizang'
-    };
+    // Populate province nav links (uses module-level SLUG_MAP)
     const prov_counts = {};
     allLocations.forEach(l => { if (l.province) prov_counts[l.province] = (prov_counts[l.province]||0)+1; });
     const provNav = document.getElementById('provinceLinks');
