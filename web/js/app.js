@@ -12,6 +12,36 @@ let userLat = null;
 let userLng = null;
 let nearbyMode = false;      // 是否处于"附近"模式
 
+// 列表渐进加载状态
+let listBatch = [];          // 当前要渲染的全量列表
+let listRendered = 0;        // 已渲染条数
+const LIST_PAGE = 60;        // 每批渲染数量
+let listObserver = null;     // IntersectionObserver
+
+// 收藏功能
+let favorites = new Set(JSON.parse(localStorage.getItem('arcmap_favs') || '[]'));
+
+function saveFavorites() {
+  localStorage.setItem('arcmap_favs', JSON.stringify([...favorites]));
+}
+
+function toggleFavorite(id, itemEl) {
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    itemEl.classList.remove('fav');
+    const btn = itemEl.querySelector('.fav-btn');
+    if (btn) btn.classList.remove('active');
+    showToast('已移出收藏');
+  } else {
+    favorites.add(id);
+    itemEl.classList.add('fav');
+    const btn = itemEl.querySelector('.fav-btn');
+    if (btn) btn.classList.add('active');
+    showToast('已收藏 ♥');
+  }
+  saveFavorites();
+}
+
 /* ── Haversine 距离（km） ─────────────────── */
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -169,47 +199,89 @@ function updateStats(locations) {
   document.getElementById('statBoth').textContent = locations.filter(l => l.game === 'both').length;
 }
 
-/* ── Shop list ────────────────────────────── */
+/* ── Build a single shop-item DOM node ─────────── */
+function buildShopItem(loc, i) {
+  const rating = loc.ratings?.amap?.rating;
+  const ratingStr = rating != null ? Number(rating).toFixed(1) : '暂无';
+  const ratingClass = rating != null ? 'has-rating' : '';
+  const fav = favorites.has(loc.id);
+
+  let distHtml = '';
+  if (userLat != null && loc.lat && loc.lng) {
+    const d = haversine(userLat, userLng, loc.lat, loc.lng);
+    distHtml = `<div class="shop-distance">📸 ${formatDistance(d)}</div>`;
+  }
+
+  const div = document.createElement('div');
+  div.className = 'shop-item' + (fav ? ' fav' : '');
+  div.setAttribute('data-idx', i);
+  div.setAttribute('data-id', loc.id);
+  div.innerHTML = `
+    <div class="shop-header">
+      <div class="shop-name">${loc.name}</div>
+      <div class="shop-header-right">
+        <button class="fav-btn${fav ? ' active' : ''}" data-id="${loc.id}" title="收藏">♥</button>
+        <div class="shop-game-dot" style="background:${getMarkerColor(loc.game)}" title="${loc.game}"></div>
+      </div>
+    </div>
+    <div class="shop-address">${loc.address}</div>
+    <div class="shop-rating ${ratingClass}">⭐ ${ratingStr}</div>
+    ${distHtml}
+  `;
+  div.addEventListener('click', (e) => {
+    if (e.target.closest('.fav-btn')) return; // 收藏按鈕单独处理
+    flyToMarker(loc, i);
+    closeSidebar();
+  });
+  div.querySelector('.fav-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFavorite(loc.id, div);
+  });
+  return div;
+}
+
+/* ── Render next batch of list items ─────────── */
+function renderListBatch() {
+  const list = document.getElementById('shopList');
+  const end = Math.min(listRendered + LIST_PAGE, listBatch.length);
+  for (let i = listRendered; i < end; i++) {
+    list.appendChild(buildShopItem(listBatch[i], i));
+  }
+  listRendered = end;
+
+  // Update / remove sentinel
+  let sentinel = document.getElementById('listSentinel');
+  if (listRendered >= listBatch.length) {
+    if (sentinel) sentinel.remove();
+    if (listObserver) { listObserver.disconnect(); listObserver = null; }
+  } else {
+    if (!sentinel) {
+      sentinel = document.createElement('div');
+      sentinel.id = 'listSentinel';
+      sentinel.style.height = '1px';
+      list.appendChild(sentinel);
+      if (!listObserver) {
+        listObserver = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting) renderListBatch();
+        }, { rootMargin: '200px' });
+      }
+      listObserver.observe(sentinel);
+    }
+  }
+}
+
+/* ── Shop list (entry point) ─────────────── */
 function updateList(locations) {
   const list = document.getElementById('shopList');
   const counter = document.getElementById('listCounter');
   list.innerHTML = '';
+  if (listObserver) { listObserver.disconnect(); listObserver = null; }
 
-  const MAX = 200;
-  const shown = Math.min(locations.length, MAX);
-  counter.textContent = locations.length > MAX
-    ? `显示前 ${MAX} 条 / 共 ${locations.length} 条`
-    : `共 ${locations.length} 条`;
+  listBatch = locations;
+  listRendered = 0;
+  counter.textContent = `共 ${locations.length} 条`;
 
-  locations.slice(0, MAX).forEach((loc, i) => {
-    const rating = loc.ratings?.amap?.rating;
-    const ratingStr = rating != null ? Number(rating).toFixed(1) : '暂无';
-    const ratingClass = rating != null ? 'has-rating' : '';
-
-    let distHtml = '';
-    if (userLat != null && loc.lat && loc.lng) {
-      const d = haversine(userLat, userLng, loc.lat, loc.lng);
-      distHtml = `<div class="shop-distance">📏 ${formatDistance(d)}</div>`;
-    }
-
-    const div = document.createElement('div');
-    div.className = 'shop-item';
-    div.setAttribute('data-idx', i);
-    div.innerHTML = `
-      <div class="shop-header">
-        <div class="shop-name">${loc.name}</div>
-        <div class="shop-game-dot" style="background:${getMarkerColor(loc.game)}" title="${loc.game}"></div>
-      </div>
-      <div class="shop-address">${loc.address}</div>
-      <div class="shop-rating ${ratingClass}">⭐ ${ratingStr}</div>
-      ${distHtml}
-    `;
-    div.addEventListener('click', () => {
-      flyToMarker(loc, i);
-      closeSidebar(); // 移动端点击后收起侧栏
-    });
-    list.appendChild(div);
-  });
+  renderListBatch();
 }
 
 /* ── Fly to marker & open popup ───────────── */
@@ -247,7 +319,11 @@ function applyFilters() {
   const rating   = document.getElementById('ratingFilter').value;
   const search   = document.getElementById('searchInput').value.trim().toLowerCase();
 
+  // 收藏模式过滤
+  const favMode = document.getElementById('favFilterBtn').classList.contains('active');
+
   filteredLocations = allLocations.filter(l => {
+    if (favMode && !favorites.has(l.id)) return false;
     if (game !== 'all' && l.game !== game) return false;
     if (province !== 'all' && l.province !== province) return false;
     if (rating !== 'all') {
@@ -490,8 +566,16 @@ function registerEvents() {
     document.getElementById('provinceFilter').value = 'all';
     document.getElementById('ratingFilter').value = 'all';
     document.getElementById('searchInput').value = '';
+    document.getElementById('favFilterBtn').classList.remove('active');
     applyFilters();
     map.setView([36.5, 105], 4);
+  });
+
+  // 收藏筛选按鈕
+  document.getElementById('favFilterBtn').addEventListener('click', () => {
+    const btn = document.getElementById('favFilterBtn');
+    btn.classList.toggle('active');
+    applyFilters();
   });
 
   // 附近机厅按钮

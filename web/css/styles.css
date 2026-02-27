@@ -874,3 +874,53 @@ body {
   border-radius: 4px;
   padding: 0 4px;
 }
+
+/* ── Favorites ───────────────────────── */
+.shop-header-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.fav-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1;
+  padding: 0 1px;
+  transition: color 0.15s, transform 0.15s;
+}
+.fav-btn:hover { color: #f472b6; transform: scale(1.2); }
+.fav-btn.active { color: #f472b6; }
+
+.shop-item.fav {
+  border-left: 3px solid #f472b6;
+  padding-left: calc(10px - 3px);
+}
+
+.fav-filter-btn {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.fav-filter-btn:hover {
+  background: #2d1b4e;
+  border-color: #f472b6;
+  color: #f9a8d4;
+}
+.fav-filter-btn.active {
+  background: #2d1b4e;
+  border-color: #f472b6;
+  color: #f9a8d4;
+  font-weight: 600;
+}
