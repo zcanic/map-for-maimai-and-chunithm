@@ -8,9 +8,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在加载店铺数据…</div>
+    </div>
+  </div>
   <div class="app">
     <header class="header">
       <div class="header-left">
@@ -27,10 +38,24 @@
 
     <main class="main">
       <aside class="sidebar">
+        <!-- Search -->
         <section class="card">
-          <h3>筛选条件</h3>
+          <h3>搜索店铺</h3>
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input id="searchInput" type="text" placeholder="店名 / 地址 / 省份…" autocomplete="off" />
+            <button id="clearSearch" class="clear-btn" title="清除">✕</button>
+          </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="card">
+          <div class="card-header-row">
+            <h3>筛选条件</h3>
+            <button id="resetFilters" class="reset-btn">重置</button>
+          </div>
           <div class="filter">
-            <label>游戏类型</label>
+            <label for="gameFilter">游戏类型</label>
             <select id="gameFilter">
               <option value="all">全部</option>
               <option value="maimai">仅 maimai DX</option>
@@ -39,13 +64,13 @@
             </select>
           </div>
           <div class="filter">
-            <label>省份</label>
+            <label for="provinceFilter">省份</label>
             <select id="provinceFilter">
               <option value="all">全部省份</option>
             </select>
           </div>
           <div class="filter">
-            <label>评分（高德）</label>
+            <label for="ratingFilter">评分（高德）</label>
             <select id="ratingFilter">
               <option value="all">全部</option>
               <option value="4.5">≥ 4.5</option>
@@ -76,7 +101,10 @@
         </section>
 
         <section class="card list">
-          <h3>店铺列表</h3>
+          <div class="card-header-row">
+            <h3>店铺列表</h3>
+            <span id="listCounter" class="list-counter"></span>
+          </div>
           <div id="shopList"></div>
         </section>
       </aside>
@@ -93,6 +121,7 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
   <script src="js/app.js"></script>
 </body>
 </html>
