@@ -3,7 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>maimai / CHUNITHM 店铺地图</title>
+
+  <!-- Primary SEO -->
+  <title>maimai DX / CHUNITHM 机厅地图 — 全国音游机厅查询</title>
+  <meta name="description" content="全国 maimai DX 和 CHUNITHM 机厅地图，覆盖 3000+ 家门店。支持按城市、省份筛选，查看评分、电话、导航，快速找到附近音游机厅。" />
+  <meta name="keywords" content="maimai DX机厅,CHUNITHM机厅,音游机厅,maimai在哪玩,中二节奏机厅,附近音游,机厅地图,maimai地图" />
+  <meta name="author" content="Arcade Map" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arcademap.top/" />
+  <meta property="og:title" content="maimai DX / CHUNITHM 机厅地图 — 全国音游机厅查询" />
+  <meta property="og:description" content="全国 3000+ maimai DX / CHUNITHM 机厅，支持城市筛选、评分查看、一键导航。" />
+  <meta property="og:image" content="https://arcademap.top/og-cover.png" />
+  <meta property="og:locale" content="zh_CN" />
+  <meta property="og:site_name" content="Arcade Map" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="maimai DX / CHUNITHM 机厅地图" />
+  <meta name="twitter:description" content="全国 3000+ 音游机厅，附近机厅一查就到。" />
+  <meta name="twitter:image" content="https://arcademap.top/og-cover.png" />
+
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Arcade Map — maimai DX / CHUNITHM 机厅地图",
+    "url": "https://arcademap.top/",
+    "description": "全国 maimai DX 和 CHUNITHM 音游机厅查询地图，覆盖 3000+ 门店",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "zh-CN",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,6 +59,7 @@
       <div class="loading-text">正在加载店铺数据…</div>
     </div>
   </div>
+
   <div class="app">
     <header class="header">
       <div class="header-left">
@@ -29,6 +67,11 @@
         <div class="subtitle">maimai DX · CHUNITHM · 全国店铺地图</div>
       </div>
       <div class="header-right">
+        <!-- 附近机厅按钮 -->
+        <button id="locateBtn" class="locate-btn" title="找附近机厅">
+          <span class="locate-icon">📍</span>
+          <span class="locate-label">附近机厅</span>
+        </button>
         <div class="status">
           <span class="status-dot"></span>
           数据来源：Wahlap + 高德地图
@@ -37,7 +80,12 @@
     </header>
 
     <main class="main">
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebar">
+        <!-- 移动端拖拽把手 -->
+        <div class="drawer-handle" id="drawerHandle">
+          <div class="drawer-handle-bar"></div>
+        </div>
+
         <!-- Search -->
         <section class="card">
           <h3>搜索店铺</h3>
@@ -109,6 +157,9 @@
         </section>
       </aside>
 
+      <!-- 移动端遮罩 -->
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
       <section class="map-panel">
         <div id="map"></div>
         <div class="legend">
@@ -116,6 +167,10 @@
           <div><span class="dot chunithm"></span> CHUNITHM</div>
           <div><span class="dot both"></span> 两种都有</div>
         </div>
+        <!-- 移动端浮动按钮：展开侧边栏 -->
+        <button class="fab-sidebar" id="fabSidebar" aria-label="打开筛选">
+          ☰
+        </button>
       </section>
     </main>
   </div>
