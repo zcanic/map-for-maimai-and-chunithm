@@ -85,6 +85,12 @@ function initMap() {
       map.closePopup();
       closeSidebar();
     }
+    // '/' key focuses search box
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') {
+      e.preventDefault();
+      openSidebar();
+      document.getElementById('searchInput').focus();
+    }
   });
 }
 
@@ -281,6 +287,11 @@ function updateList(locations) {
   listRendered = 0;
   counter.textContent = `共 ${locations.length} 条`;
 
+  if (locations.length === 0) {
+    list.innerHTML = '<div class="empty-state">😢 没有找到符合条件的机厅<br><small>试试放宽筛选条件</small></div>';
+    return;
+  }
+
   renderListBatch();
 }
 
@@ -337,7 +348,7 @@ function applyFilters() {
     return true;
   });
 
-  // 附近模式：按距离排序
+  // 附近模式：按距离排序（覆盖其他排序）
   if (nearbyMode && userLat != null) {
     filteredLocations = filteredLocations
       .map(l => ({
@@ -345,6 +356,23 @@ function applyFilters() {
         _dist: (l.lat && l.lng) ? haversine(userLat, userLng, l.lat, l.lng) : Infinity
       }))
       .sort((a, b) => a._dist - b._dist);
+  } else {
+    const sort = document.getElementById('sortFilter')?.value || 'default';
+    if (sort === 'rating_desc') {
+      filteredLocations = [...filteredLocations].sort((a, b) => {
+        const ra = a.ratings?.amap?.rating ?? -1;
+        const rb = b.ratings?.amap?.rating ?? -1;
+        return rb - ra;
+      });
+    } else if (sort === 'rating_asc') {
+      filteredLocations = [...filteredLocations].sort((a, b) => {
+        const ra = a.ratings?.amap?.rating ?? 999;
+        const rb = b.ratings?.amap?.rating ?? 999;
+        return ra - rb;
+      });
+    } else if (sort === 'name_asc') {
+      filteredLocations = [...filteredLocations].sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+    }
   }
 
   renderMarkers(filteredLocations);
@@ -546,7 +574,7 @@ function handleHashNavigation() {
 
 /* ── Events ───────────────────────────────── */
 function registerEvents() {
-  ['gameFilter', 'provinceFilter', 'ratingFilter'].forEach(id => {
+  ['gameFilter', 'provinceFilter', 'ratingFilter', 'sortFilter'].forEach(id => {
     document.getElementById(id).addEventListener('change', applyFilters);
   });
 
@@ -566,6 +594,7 @@ function registerEvents() {
     document.getElementById('provinceFilter').value = 'all';
     document.getElementById('ratingFilter').value = 'all';
     document.getElementById('searchInput').value = '';
+    document.getElementById('sortFilter').value = 'default';
     document.getElementById('favFilterBtn').classList.remove('active');
     applyFilters();
     map.setView([36.5, 105], 4);

@@ -924,3 +924,10 @@ body {
   color: #f9a8d4;
   font-weight: 600;
 }
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 2;
+}

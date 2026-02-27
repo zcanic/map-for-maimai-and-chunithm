@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="favicon.ico" type="image/x-icon" />
 </head>
 <body>
@@ -128,6 +129,15 @@
           </div>
           <div class="filter">
             <button id="favFilterBtn" class="fav-filter-btn">♥ 收藏的机厅</button>
+          </div>
+          <div class="filter">
+            <label for="sortFilter">排列方式</label>
+            <select id="sortFilter">
+              <option value="default">默认（数据顺序）</option>
+              <option value="rating_desc">评分高→低</option>
+              <option value="rating_asc">评分低→高</option>
+              <option value="name_asc">名称 A→Z</option>
+            </select>
           </div>
         </section>
 
