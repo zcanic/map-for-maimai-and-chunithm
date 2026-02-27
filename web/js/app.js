@@ -413,6 +413,31 @@ function loadData() {
       sel.appendChild(opt);
     });
 
+    // Populate province nav links
+    const SLUG_MAP = {
+      '北京':'beijing','上海':'shanghai','广东':'guangdong','浙江':'zhejiang','江苏':'jiangsu',
+      '四川':'sichuan','山东':'shandong','湖北':'hubei','湖南':'hunan','河北':'hebei',
+      '河南':'henan','安徽':'anhui','福建':'fujian','辽宁':'liaoning','陕西':'shaanxi',
+      '重庆':'chongqing','天津':'tianjin','云南':'yunnan','贵州':'guizhou','山西':'shanxi',
+      '江西':'jiangxi','广西':'guangxi','黑龙江':'heilongjiang','吉林':'jilin','内蒙古':'neimenggu',
+      '甘肃':'gansu','海南':'hainan','新疆':'xinjiang','宁夏':'ningxia','青海':'qinghai','西藏':'xizang'
+    };
+    const prov_counts = {};
+    allLocations.forEach(l => { if (l.province) prov_counts[l.province] = (prov_counts[l.province]||0)+1; });
+    const provNav = document.getElementById('provinceLinks');
+    if (provNav) {
+      provinces
+        .sort((a, b) => (prov_counts[b]||0) - (prov_counts[a]||0))
+        .forEach(p => {
+          const sl = SLUG_MAP[p] || p;
+          const a = document.createElement('a');
+          a.href = `provinces/${sl}/`;
+          a.className = 'prov-link';
+          a.innerHTML = `${p} <em>${prov_counts[p]||0}</em>`;
+          provNav.appendChild(a);
+        });
+    }
+
     filteredLocations = allLocations;
     renderMarkers(allLocations);
     updateStats(allLocations);

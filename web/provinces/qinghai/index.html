@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>青海 maimai DX / CHUNITHM 机厅地图 — 共 6 家</title>
+  <meta name="description" content="青海共有 6 家音游机厅，其中 maimai DX 4 家、CHUNITHM 1 家、双机厅 1 家。查看地址、评分、电话，一键导航，快速找到青海的机厅。" />
+  <meta name="keywords" content="青海maimai DX机厅,青海CHUNITHM机厅,青海音游机厅,青海机厅地图" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://arcademap.top/provinces/qinghai/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arcademap.top/provinces/qinghai/" />
+  <meta property="og:title" content="青海 maimai DX / CHUNITHM 机厅地图 — 共 6 家" />
+  <meta property="og:description" content="青海共有 6 家音游机厅，其中 maimai DX 4 家、CHUNITHM 1 家、双机厅 1 家。查看地址、评分、电话，一键导航，快速找到青海的机厅。" />
+  <meta property="og:image" content="https://arcademap.top/og-cover.png" />
+  <meta property="og:locale" content="zh_CN" />
+
+  <!-- Schema.org ItemList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "青海音游机厅列表",
+    "description": "青海共有 6 家音游机厅，其中 maimai DX 4 家、CHUNITHM 1 家、双机厅 1 家。查看地址、评分、电话，一键导航，快速找到青海的机厅。",
+    "url": "https://arcademap.top/provinces/qinghai/",
+    "numberOfItems": 6,
+    "itemListElement": [
+  {
+    "@type": "AmusementPark",
+    "name": "嘻哈电玩城西宁湟中店",
+    "address": "青海省西宁市湟中区滨河南路北侧1号C区C-58-59嘻哈电玩城",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 36.501291,
+      "longitude": 101.571683
+    },
+    "description": "maimai DX 机厅"
+  },
+  {
+    "@type": "AmusementPark",
+    "name": "天空之城西宁城北吾悦广场店",
+    "address": "青海省西宁市城北区小桥大街吾悦广场3楼天空之城",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 36.585675,
+      "longitude": 101.836175
+    },
+    "description": "两种都有 机厅"
+  },
+  {
+    "@type": "AmusementPark",
+    "name": "玩派嘉年华西宁海湖万达店",
+    "address": "青海省西宁市城西区海湖万达广场三楼玩派嘉年华",
+    "description": "maimai DX 机厅"
+  },
+  {
+    "@type": "AmusementPark",
+    "name": "吉合家庭娱乐中心西宁万达店",
+    "address": "青海省西宁市城西区广场路1号海湖万达广场3号楼三层3F-A",
+    "description": "maimai DX 机厅"
+  },
+  {
+    "@type": "AmusementPark",
+    "name": "风云再起西宁店",
+    "address": "青海省西宁市城西区西关大街42-52号西宁国芳百货2层风云再起",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 36.62821,
+      "longitude": 101.7603
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "3.7",
+      "bestRating": "5"
+    },
+    "description": "maimai DX 机厅"
+  },
+  {
+    "@type": "AmusementPark",
+    "name": "玩派嘉年华西宁力盟店",
+    "address": "青海省西宁市城西区力盟商业街6号楼一楼玩派嘉年华",
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 36.628176,
+      "longitude": 101.759583
+    },
+    "description": "CHUNITHM 机厅"
+  }
+    ]
+  }
+  </script>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #0b0f1a; color: #e8eaf1; line-height: 1.5; }
+    a { color: #60a5fa; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── Header ── */
+    .site-header {
+      background: #111827;
+      border-bottom: 1px solid #1e293b;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .site-header .logo { font-size: 1.1rem; font-weight: 700; color: #a78bfa; }
+    .breadcrumb { font-size: 0.85rem; color: #94a3b8; }
+    .breadcrumb a { color: #94a3b8; }
+
+    /* ── Hero stats ── */
+    .hero {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      padding: 36px 24px 28px;
+      text-align: center;
+    }
+    .hero h1 { font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; margin-bottom: 8px; }
+    .hero .sub { color: #94a3b8; font-size: 0.95rem; margin-bottom: 20px; }
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .stat-chip {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 18px;
+      font-size: 0.9rem;
+    }
+    .stat-chip strong { color: #c4b5fd; }
+
+    /* ── Map ── */
+    #map {
+      width: 100%;
+      height: 380px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    /* ── Shop list ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 24px 16px 48px; }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e293b;
+    }
+    .shop-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .shop-card:hover { border-color: #4f46e5; }
+    .shop-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .game-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .shop-name { font-weight: 600; flex: 1; font-size: 0.97rem; }
+    .game-tag {
+      font-size: 0.72rem;
+      background: #1e293b;
+      border-radius: 4px;
+      padding: 2px 6px;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .shop-address {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .shop-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.82rem;
+    }
+    .rating { color: #94a3b8; }
+    .rating.has-rating { color: #fbbf24; }
+    .tel a { color: #60a5fa; }
+    .nav-btn {
+      display: inline-block;
+      background: #1e3a5f;
+      border: 1px solid #2563eb;
+      color: #93c5fd;
+      border-radius: 5px;
+      padding: 2px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+    }
+    .nav-btn:hover { background: #1d4ed8; color: #fff; text-decoration: none; }
+
+    /* ── Back link ── */
+    .back-link {
+      display: inline-block;
+      margin-top: 32px;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    .back-link:hover { color: #94a3b8; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero { padding: 24px 16px 20px; }
+      #map { height: 260px; }
+      .stats-row { gap: 8px; }
+      .stat-chip { padding: 6px 12px; font-size: 0.82rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <span class="logo">Arcade Map</span>
+    <nav class="breadcrumb">
+      <a href="../../">全国地图</a> › 青海
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>青海 音游机厅地图</h1>
+    <p class="sub">maimai DX · CHUNITHM · 共 6 家机厅</p>
+    <div class="stats-row">
+      <div class="stat-chip">总计 <strong>6</strong> 家</div>
+      <div class="stat-chip">maimai DX <strong>4</strong> 家</div>
+      <div class="stat-chip">CHUNITHM <strong>1</strong> 家</div>
+      <div class="stat-chip">双机厅 <strong>1</strong> 家</div>
+    </div>
+  </section>
+
+  <!-- 交互地图 -->
+  <div id="map"></div>
+
+  <!-- 静态店铺列表（可被爬虫完整抓取） -->
+  <div class="container">
+    <p class="section-title">全部 6 家门店</p>
+    
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#f472b6" title="maimai DX"></span>
+      <strong class="shop-name">嘻哈电玩城西宁湟中店</strong>
+      <span class="game-tag">maimai DX</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市湟中区滨河南路北侧1号C区C-58-59嘻哈电玩城</div>
+    <div class="shop-meta">
+      <span class="rating ">⭐ 暂无</span>
+      
+      <a class="nav-btn" href="https://uri.amap.com/navigation?to=101.571683,36.501291,嘻哈电玩城西宁湟中店&mode=car&callnative=1" target="_blank" rel="noopener">🗺️ 导航</a>
+    </div>
+  </div>
+
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#a78bfa" title="两种都有"></span>
+      <strong class="shop-name">天空之城西宁城北吾悦广场店</strong>
+      <span class="game-tag">两种都有</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市城北区小桥大街吾悦广场3楼天空之城</div>
+    <div class="shop-meta">
+      <span class="rating ">⭐ 暂无</span>
+      
+      <a class="nav-btn" href="https://uri.amap.com/navigation?to=101.836175,36.585675,天空之城西宁城北吾悦广场店&mode=car&callnative=1" target="_blank" rel="noopener">🗺️ 导航</a>
+    </div>
+  </div>
+
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#f472b6" title="maimai DX"></span>
+      <strong class="shop-name">玩派嘉年华西宁海湖万达店</strong>
+      <span class="game-tag">maimai DX</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市城西区海湖万达广场三楼玩派嘉年华</div>
+    <div class="shop-meta">
+      <span class="rating ">⭐ 暂无</span>
+      
+      
+    </div>
+  </div>
+
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#f472b6" title="maimai DX"></span>
+      <strong class="shop-name">吉合家庭娱乐中心西宁万达店</strong>
+      <span class="game-tag">maimai DX</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市城西区广场路1号海湖万达广场3号楼三层3F-A</div>
+    <div class="shop-meta">
+      <span class="rating ">⭐ 暂无</span>
+      
+      
+    </div>
+  </div>
+
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#f472b6" title="maimai DX"></span>
+      <strong class="shop-name">风云再起西宁店</strong>
+      <span class="game-tag">maimai DX</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市城西区西关大街42-52号西宁国芳百货2层风云再起</div>
+    <div class="shop-meta">
+      <span class="rating has-rating">⭐ 3.7</span>
+      
+      <a class="nav-btn" href="https://uri.amap.com/navigation?to=101.7603,36.62821,风云再起西宁店&mode=car&callnative=1" target="_blank" rel="noopener">🗺️ 导航</a>
+    </div>
+  </div>
+
+  <div class="shop-card">
+    <div class="shop-top">
+      <span class="game-dot" style="background:#38bdf8" title="CHUNITHM"></span>
+      <strong class="shop-name">玩派嘉年华西宁力盟店</strong>
+      <span class="game-tag">CHUNITHM</span>
+    </div>
+    <div class="shop-address">📍 青海省西宁市城西区力盟商业街6号楼一楼玩派嘉年华</div>
+    <div class="shop-meta">
+      <span class="rating ">⭐ 暂无</span>
+      
+      <a class="nav-btn" href="https://uri.amap.com/navigation?to=101.759583,36.628176,玩派嘉年华西宁力盟店&mode=car&callnative=1" target="_blank" rel="noopener">🗺️ 导航</a>
+    </div>
+  </div>
+    <a class="back-link" href="../../">← 返回全国地图</a>
+  </div>
+
+  <!-- Leaflet scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+  <script>
+  (function() {
+    var locs = [{"name":"嘻哈电玩城西宁湟中店","lat":36.501291,"lng":101.571683,"game":"maimai","address":"青海省西宁市湟中区滨河南路北侧1号C区C-58-59嘻哈电玩城"},{"name":"天空之城西宁城北吾悦广场店","lat":36.585675,"lng":101.836175,"game":"both","address":"青海省西宁市城北区小桥大街吾悦广场3楼天空之城"},{"name":"风云再起西宁店","lat":36.62821,"lng":101.7603,"game":"maimai","address":"青海省西宁市城西区西关大街42-52号西宁国芳百货2层风云再起"},{"name":"玩派嘉年华西宁力盟店","lat":36.628176,"lng":101.759583,"game":"chunithm","address":"青海省西宁市城西区力盟商业街6号楼一楼玩派嘉年华"}];
+
+    var colors = { maimai:"#f472b6", chunithm:"#38bdf8", both:"#a78bfa" };
+
+    // Compute center
+    var lats = locs.map(function(l){return l.lat;});
+    var lngs = locs.map(function(l){return l.lng;});
+    var centerLat = (Math.min.apply(null,lats)+Math.max.apply(null,lats))/2;
+    var centerLng = (Math.min.apply(null,lngs)+Math.max.apply(null,lngs))/2;
+
+    var map = L.map('map').setView([centerLat, centerLng], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    var cluster = L.markerClusterGroup({
+      chunkedLoading: true, maxClusterRadius: 50, showCoverageOnHover: false
+    });
+
+    locs.forEach(function(l) {
+      var color = colors[l.game] || '#aaa';
+      var icon = L.divIcon({
+        className: '',
+        html: '<div style="width:12px;height:12px;border-radius:50%;background:'+color+';border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.5)"></div>',
+        iconSize: [12, 12], iconAnchor: [6, 6]
+      });
+      var m = L.marker([l.lat, l.lng], {icon: icon});
+      m.bindPopup('<strong>' + l.name + '</strong><br/><small>' + l.address + '</small>');
+      cluster.addLayer(m);
+    });
+    map.addLayer(cluster);
+  })();
+  </script>
+
+</body>
+</html>
